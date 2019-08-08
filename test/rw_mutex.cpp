@@ -9,39 +9,43 @@
 #include "rw_mutex.h"
 
 bool AHAOAHA::rw_mutex::r_lock() {
-    bool is_write = false;
-    while (!_is_write.compare_exchange_strong(is_write, true)) {
-        //当前资源正在写入
-        //printf("waiting...\n");
-        is_write = false;
+    bool exp = NOT_WRITE;
+    while (!_status.compare_exchange_strong(exp, NOT_WRITE)) {
+        exp = NOT_WRITE;
     }
-    //原子操作
-    _r_count++;
+    //当status为NOT_WRITE 使用NOT_WRITE刷新_status和exp
+    //当status为IS_WRITE cas会使用_status刷新exp的值 需要在循环内部更新exp的值
+
+    _r_count.fetch_add(1);
     return true;
 }
 
 bool AHAOAHA::rw_mutex::r_unlock() {
-    _r_count--;
+    _r_count.fetch_sub(1);
     return true;
 }
 
-uint32_t AHAOAHA::rw_mutex::get_r_count() {
-    return _r_count;
-}
-
 bool AHAOAHA::rw_mutex::w_lock() {
-    _is_write.store(true);
-    //等待读者完成 cas
-    uint64_t r_count = 0;
-    while(!_r_count.compare_exchange_strong(r_count, r_count)) {
-        usleep(1);
-        r_count = 0;
-    } 
-    _mtx.lock();
+    //判断当前资源是否正在被其他写者占有
+    bool w_exp = IS_WRITE;
+    while(_status.compare_exchange_strong(w_exp, IS_WRITE));
+    //当资源正在别其他写者占有时 会一直再此地自旋 当状态不为IS_WRITE之后 会原子性的将状态改为IS_WRITE
+    
+    //等待之前的读者全部退出
+    uint64_t exp = 0;
+    while(!_r_count.compare_exchange_strong(exp, 0)) {
+        exp = 0;
+    }
+    //当前读者不为0时 exp值会被cas刷新为当前读者的值 需要在循环内部刷新exp值
+    //当前读者为0时 exp值和_r_count的值会被val刷新
+
     return true;
 }
 
 bool AHAOAHA::rw_mutex::w_unlock() {
-    _mtx.unlock();
-    _is_write.store(false);
+    bool exp = IS_WRITE;
+    while(!_status.compare_exchange_strong(exp, NOT_WRITE)) {
+        return false;
+    }
+    return true;
 }
