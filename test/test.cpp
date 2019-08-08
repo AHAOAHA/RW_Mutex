@@ -22,7 +22,6 @@ void read() {
 void write() {
     rw_mtx.w_lock();
     num++;
-    usleep(2);
     rw_mtx.w_unlock();
 }
 
@@ -45,15 +44,14 @@ int main() {
     pthread_t p2;
 
 
-    for(int i = 0; i < 3000; i++) {
-        pthread_create(&p2, NULL, write_handle, NULL);
-    }
-
-
     //for(int i = 0; i < 100000; i++) {
     //    pthread_create(&p1, NULL, read_handle, NULL);
     //}
 
+
+    for(int i = 0; i < 1000; i++) {
+        pthread_create(&p2, NULL, write_handle, NULL);
+    }
 
     while(1) {   //主线程不退出
         printf("current num: %d\n", num);
