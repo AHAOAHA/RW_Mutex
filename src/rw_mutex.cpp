@@ -27,8 +27,10 @@ bool AHAOAHA::rw_mutex::r_unlock() {
 
 bool AHAOAHA::rw_mutex::w_lock() {
     //判断当前资源是否正在被其他写者占有
-    bool w_exp = IS_WRITE;
-    while(_status.compare_exchange_strong(w_exp, IS_WRITE));
+    bool w_exp = NOT_WRITE;
+    while(!_status.compare_exchange_strong(w_exp, IS_WRITE)) {
+        w_exp = NOT_WRITE;
+    }
     //当资源正在别其他写者占有时 会一直再此地自旋 当状态不为IS_WRITE之后 会原子性的将状态改为IS_WRITE
     
     //等待之前的读者全部退出

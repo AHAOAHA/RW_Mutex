@@ -45,7 +45,7 @@ int main() {
     pthread_t p2;
 
 
-    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 3000; i++) {
         pthread_create(&p2, NULL, write_handle, NULL);
     }
 
@@ -54,9 +54,10 @@ int main() {
     //    pthread_create(&p1, NULL, read_handle, NULL);
     //}
 
-    sleep(3);
 
-    printf("last num: %d\n", num);
-    while(1);   //主线程不退出
+    while(1) {   //主线程不退出
+        printf("current num: %d\n", num);
+        sleep(1);
+    }
     return 0;
 }
