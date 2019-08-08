@@ -9,15 +9,21 @@
 #ifndef __RW_MUTEX_H__
 #define __RW_MUTEX_H__
 
-#include <mutex>
 #include <atomic>
 #include <unistd.h>
+#include <pthread.h>
+#include <stdio.h>
 
 namespace AHAOAHA {
+
     class rw_mutex{
+        const bool IS_WRITE = true;
+        const bool NOT_WRITE = false;
+
         public:
-            rw_mutex():_r_count(0), _is_write(false) {
-                _r_count = 0;
+            rw_mutex() {
+                std::atomic_init(&_status, NOT_WRITE);
+                std::atomic_init(&_r_count, uint64_t(0));
             }
             ~rw_mutex() {}
 
@@ -25,12 +31,11 @@ namespace AHAOAHA {
             bool r_unlock();
             bool w_lock();
             bool w_unlock();
-            uint32_t get_r_count();
+            uint32_t status() const;
 
         private:
-            std::mutex _mtx;    //lock
-            std::atomic<bool> _is_write;   //
-            std::atomic<uint64_t> _r_count; //原子性的计数
+            std::atomic<bool> _status;      //
+            std::atomic<uint64_t> _r_count;       //原子性的计数
     };
 }
 
