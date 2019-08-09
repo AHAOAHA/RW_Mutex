@@ -13,30 +13,24 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
-#include <SpinLock.h>
 
 namespace AHAOAHA {
 
-    class rw_mutex{
-        const bool IS_WRITE = true;
-        const bool NOT_WRITE = false;
+    class SpinLock{
+        const bool IS_LOCK = true;
+        const bool NOT_LOCK = false;
 
         public:
-            rw_mutex() {
-                std::atomic_init(&_status, NOT_WRITE);
-                std::atomic_init(&_r_count, uint64_t(0));
+            SpinLock() {
+                std::atomic_init(&_status, NOT_LOCK);
             }
-            ~rw_mutex() {}
+            ~SpinLock() {}
 
-            bool r_lock();
-            bool r_unlock();
-            bool w_lock();
-            bool w_unlock();
+            bool lock();
+            bool unlock();
 
         private:
             std::atomic<bool> _status;      //
-            std::atomic<uint64_t> _r_count;       //原子性的计数
-            SpinLock _lock; //spinlock
     };
 }
 
