@@ -13,29 +13,31 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <mutex>
+#include <condition_variable>
 
 namespace AHAOAHA {
 
-    class rw_mutex{
-        const bool IS_WRITE = true;
-        const bool NOT_WRITE = false;
-
+    class RW_Mutex{
         public:
-            rw_mutex() {
-                std::atomic_init(&_status, NOT_WRITE);
-                std::atomic_init(&_r_count, uint64_t(0));
-            }
-            ~rw_mutex() {}
+            RW_Mutex() {}
+            ~RW_Mutex() {}
 
-            bool r_lock();
+            void r_lock();
             bool r_unlock();
-            bool w_lock();
+            void w_lock();
             bool w_unlock();
-            uint32_t status() const;
+        private:
+            RW_Mutex(const RW_Mutex&);
+            RW_Mutex operator=(const RW_Mutex&);
 
         private:
-            std::atomic<bool> _status;      //
-            std::atomic<uint64_t> _r_count;       //原子性的计数
+            std::mutex _mtx;
+            std::condition_variable _reader_cv;
+            std::condition_variable _writer_cv;
+            bool _write_able = true;
+            int32_t _reader_count = 0;
+            int32_t _writer_count = 0;
     };
 }
 
